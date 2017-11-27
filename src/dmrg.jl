@@ -65,15 +65,28 @@ function dmrg_step!{L,T}(
     # Update the MPS.
     wf_mat = reshape(wf, prod(size(prev, 1, 2)), prod(size(prev, 3, 4)))
     U, S, V = svd(wf_mat)
-    if dir == Right
-        A = U
-        B = diagm(S) * V'
-    elseif dir == Left
-        A = U * diagm(S)
-        B = V'
+    trunc_len = length(S)
+    trunc_cutoff = 0.0
+    while trunc_len > set.bond_max ||
+          (set.bond_min < trunc_len &&
+           trunc_cutoff + S[trunc_len]^2 <= set.cutoff_max)
+
+        trunc_cutoff += S[trunc_len]^2
+        trunc_len -= 1
     end
-    psi.tnsrs[site] = reshape(A, size(prev, 1), size(prev, 2), length(S))
-    psi.tnsrs[site+1] = reshape(B, length(S), size(prev, 3), size(prev, 4))
+    # Because the diagonalization results in a normalized eigenvector, we are
+    # guaranteed that sum(S.^2) == 1. However, when we throw away some singular
+    # values, we should renormalize.
+    S ./= sqrt(sum(S[1:trunc_len].^2))
+    if dir == Right
+        A = U[:, 1:trunc_len]
+        B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
+    elseif dir == Left
+        A = U[:, 1:trunc_len] * diagm(S[1:trunc_len])
+        B = V[:, 1:trunc_len]'
+    end
+    psi.tnsrs[site] = reshape(A, size(prev, 1), size(prev, 2), trunc_len)
+    psi.tnsrs[site+1] = reshape(B, trunc_len, size(prev, 3), size(prev, 4))
 
     # Update the H contraction.
     if dir == Right

@@ -28,6 +28,13 @@ Parameters for a single DMRG sweep.
 struct SweepSettings
     "Number of diagonalization iterations in a sweep."
     num_iters::Int
+
+    "Minimum bond dimension to keep when truncating."
+    bond_min::Int
+    "Maximum bond dimension to keep when truncating."
+    bond_max::Int
+    "Maximum eigenvalue weight to drop when truncating."
+    cutoff_max::Float64
 end
 
 
@@ -42,6 +49,9 @@ struct SweepSchedule
 
     # SweepSettings parameters.
     num_iters::ForeverVector{Int}
+    bond_min::ForeverVector{Int}
+    bond_max::ForeverVector{Int}
+    cutoff_max::ForeverVector{Float64}
 end
 
 """
@@ -57,8 +67,15 @@ function SweepSchedule(num_sweeps; kwargs...)
     kwargs = Dict(kwargs)
 
     num_iters = ForeverVector(get(kwargs, :num_iters, 2))
+    bond_min = ForeverVector(get(kwargs, :bond_min, 5))
+    bond_max = ForeverVector(get(kwargs, :bond_max, 100))
+    cutoff_max = ForeverVector(get(kwargs, :cutoff_max, 1e-10))
 
-    SweepSchedule(num_sweeps, num_iters)
+    SweepSchedule(num_sweeps, num_iters, bond_min, bond_max, cutoff_max)
 end
 
-Base.getindex(sch::SweepSchedule, i::Int) = SweepSettings(sch.num_iters[i])
+Base.getindex(sch::SweepSchedule, i::Int) =
+    SweepSettings(sch.num_iters[i],
+                  sch.bond_min[i],
+                  sch.bond_max[i],
+                  sch.cutoff_max[i])
