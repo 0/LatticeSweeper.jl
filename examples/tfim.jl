@@ -50,7 +50,7 @@ H = MPO(H_tnsr, L)
 spin_up = [1.0, 0.0]
 psi = MPS(spin_up, L)
 
-E0 = dmrg!(psi, H, num_sweeps)
+E0 = dmrg!(psi, H, SweepSchedule(num_sweeps))
 
 # Ground state energy.
 println("E0 = ", E0)

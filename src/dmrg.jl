@@ -4,7 +4,8 @@
         psi::MPS{L,T},
         H_cntrctns::OffsetArray{Contraction{T,1},1},
         dir::Direction,
-        site::Int)
+        site::Int,
+        set::SweepSettings)
 
 Update `psi` by doing a two-site DMRG step in the direction `dir` at sites
 `site` and `site+1` using the Hamiltonian `H` and Hamiltonian contractions
@@ -15,7 +16,8 @@ function dmrg_step!{L,T}(
         psi::MPS{L,T},
         H_cntrctns::OffsetArray{Contraction{T,1},1},
         dir::Direction,
-        site::Int)
+        site::Int,
+        set::SweepSettings)
 
     left = H_cntrctns[site-1].tnsr
     right = H_cntrctns[site+2].tnsr
@@ -52,12 +54,16 @@ function dmrg_step!{L,T}(
     # Improve our guess for the ground state of the two-site-projected
     # Hamiltonian by using a sparse diagonalizer. Since there's no way to
     # request a specific number of iterations, we just say we're converged
-    # after a single iteration and do it twice.
+    # after a single iteration and repeat several times.
     eigen = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=vec(prev))
-    eigen = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=vec(eigen[2]))
+    wf = vec(eigen[2])
+    for _ in 1:(set.num_iters-1)
+        eigen = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=wf)
+        wf = vec(eigen[2])
+    end
 
     # Update the MPS.
-    wf_mat = reshape(eigen[2], prod(size(prev, 1, 2)), prod(size(prev, 3, 4)))
+    wf_mat = reshape(wf, prod(size(prev, 1, 2)), prod(size(prev, 3, 4)))
     U, S, V = svd(wf_mat)
     if dir == Right
         A = U
@@ -81,12 +87,12 @@ end
 
 
 """
-    dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, num_sweeps::Int)
+    dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
 
-Perform `num_sweeps` sweeps of two-site DMRG on the state `psi` using the
-Hamiltonian `H`.
+Perform two-site DMRG on the state `psi` using the Hamiltonian `H` with
+parameters specified in `sch`.
 """
-function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, num_sweeps::Int)
+function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
     # At least 3 sites.
     L >= 3 || throw(DomainError())
 
@@ -100,21 +106,21 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, num_sweeps::Int)
     H_cntrctns[1] = dummy_contraction(T, 1)
     H_cntrctns[0] = cap_contraction(T, Right, L, 1)
 
-    for n in 1:num_sweeps
+    for n in 1:sch.num_sweeps
         if n % 2 != 0
             # Right sweep.
             for i in 1:(L-2)
-                dmrg_step!(H, psi, H_cntrctns, Right, i)
+                dmrg_step!(H, psi, H_cntrctns, Right, i, sch[n])
             end
         else
             # Left sweep.
             for i in (L-1):-1:2
-                dmrg_step!(H, psi, H_cntrctns, Left, i)
+                dmrg_step!(H, psi, H_cntrctns, Left, i, sch[n])
             end
         end
     end
 
-    if num_sweeps % 2 == 0
+    if sch.num_sweeps % 2 == 0
         # Ended on the left.
         E0 = H_cntrctns[1] * contract_site(H_cntrctns[3], psi, H)
     else

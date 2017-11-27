@@ -7,6 +7,7 @@ using TensorOperations
 export
     MPS,
     MPO,
+    SweepSchedule,
     dmrg!
 
 """
@@ -19,6 +20,8 @@ include("util.jl")
 include("mps.jl")
 include("mpo.jl")
 include("contraction.jl")
+
+include("settings.jl")
 
 include("dmrg.jl")
 
