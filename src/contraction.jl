@@ -171,3 +171,6 @@ Contract together left and right sides, producing a scalar.
         @tensor $left * $right
     end
 end
+
+Base.:*(cntrctn_left::Contraction, cntrctn_right::Contraction) =
+    contract_sides(cntrctn_left, cntrctn_right)

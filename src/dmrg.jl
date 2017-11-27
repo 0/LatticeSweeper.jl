@@ -116,12 +116,10 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, num_sweeps::Int)
 
     if num_sweeps % 2 == 0
         # Ended on the left.
-        H_cntrctn = contract_site(H_cntrctns[3], psi, H)
-        E0 = contract_sides(H_cntrctns[1], H_cntrctn)
+        E0 = H_cntrctns[1] * contract_site(H_cntrctns[3], psi, H)
     else
         # Ended on the right.
-        H_cntrctn = contract_site(H_cntrctns[L-2], psi, H)
-        E0 = contract_sides(H_cntrctn, H_cntrctns[L])
+        E0 = contract_site(H_cntrctns[L-2], psi, H) * H_cntrctns[L]
     end
 
     realize(E0)
