@@ -25,6 +25,8 @@ To use it without installing it (e.g. from a local git checkout), you'll need to
 
 * `julia examples/tfim.jl --help`
 * `julia examples/tfim.jl -g 1.0 -L 8 --num-sweeps 4`
+* `julia examples/dipole_chain.jl --help`
+* `julia examples/dipole_chain.jl -R 1.0 -N 3 --l-max 1 --num-sweeps 4`
 
 
 ## References
