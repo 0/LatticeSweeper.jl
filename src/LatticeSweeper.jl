@@ -9,6 +9,7 @@ export
 
     MPS,
     MPO,
+    compress!,
 
     SweepSchedule,
     dmrg!

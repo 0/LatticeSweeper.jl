@@ -114,6 +114,7 @@ for i in 1:(N-2)
     end
 end
 H = MPO(H_tnsr, N)
+compress!(H, 1e-15)
 
 # Starting wavefunction.
 wf = zeros(basis_size)

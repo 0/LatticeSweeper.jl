@@ -44,3 +44,44 @@ function MPO{T}(x::Array{T,4}, L)
 
     MPO{L,T}(tnsrs)
 end
+
+
+"""
+    compress!{L}(o::MPO{L}, cutoff_max::Float64)
+
+Compress `o` by throwing away singular values below `cutoff_max` at each bond.
+"""
+function compress!{L}(o::MPO{L}, cutoff_max::Float64)
+    for range in [1:(L-2), (L-1):-1:1]
+        for site in range
+            # Combine adjacent tensors:
+            #
+            #        n     p
+            #        |     |
+            #     a -#- b -#- c
+            #        |     |
+            #        m     o
+            @tensor M[a, m, n, o, p, c] :=
+                o.tnsrs[site][a, m, n, b] * o.tnsrs[site+1][b, o, p, c]
+            M_mat = reshape(M, prod(size(M, 1, 2, 3)), prod(size(M, 4, 5, 6)))
+
+            U, S, V = svd(M_mat)
+            # Operators are not normalized in general, so we should not expect
+            # that sum(S.^2) == 1.
+            trunc_total = sum(S.^2)
+            trunc_len = length(S)
+            trunc_cutoff = 0.0
+            while (1 < trunc_len &&
+                   trunc_cutoff + S[trunc_len]^2/trunc_total <= cutoff_max)
+                trunc_cutoff += S[trunc_len]^2/trunc_total
+                trunc_len -= 1
+            end
+            A = U[:, 1:trunc_len]
+            B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
+            o.tnsrs[site] = reshape(A, size(M, 1, 2, 3)..., trunc_len)
+            o.tnsrs[site+1] = reshape(B, trunc_len, size(M, 4, 5, 6)...)
+        end
+    end
+
+    nothing
+end
