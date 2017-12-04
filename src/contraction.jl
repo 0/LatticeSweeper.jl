@@ -137,6 +137,9 @@ contract_site{T,N,dir,L}(
         os::Vararg{MPO{L,T},N}) =
     contract_site(cntrctn, s, s, os...)
 
+Base.:*(cntrctn::Contraction, args::Tuple{MPS,Vararg{MPO}}) =
+    contract_site(cntrctn, args...)
+
 
 """
     contract_sides{T,N}(

@@ -80,13 +80,11 @@ function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
 
     # Update the contractions.
     if state.dir == Right
-        state.H_cntrctns[site] = contract_site(state.H_cntrctns[site-1],
-                                               psi, H)
+        state.H_cntrctns[site] = state.H_cntrctns[site-1] * (psi, H)
     elseif state.dir == Left
-        state.H_cntrctns[site+1] = contract_site(state.H_cntrctns[site+2],
-                                                 psi, H)
+        state.H_cntrctns[site+1] = state.H_cntrctns[site+2] * (psi, H)
     end
-    state.H2_cntrctn = contract_site(state.H2_cntrctn, psi, H, H)
+    state.H2_cntrctn = state.H2_cntrctn * (psi, H, H)
 
     eigvals
 end
@@ -131,17 +129,13 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
         end
 
         if state.dir == Right
-            energy = contract_site(state.H_cntrctns[L-2], psi, H) *
-                     state.H_cntrctns[L]
-            H2 = contract_site(contract_site(state.H2_cntrctn, psi, H, H),
-                               psi, H, H) *
+            energy = state.H_cntrctns[L-2] * (psi, H) * state.H_cntrctns[L]
+            H2 = state.H2_cntrctn * (psi, H, H) * (psi, H, H) *
                  cap_contraction(T, Left, L, 2)
         elseif state.dir == Left
-            energy = state.H_cntrctns[1] *
-                     contract_site(state.H_cntrctns[3], psi, H)
+            energy = state.H_cntrctns[1] * (psi, H) * state.H_cntrctns[3]
             H2 = cap_contraction(T, Right, L, 2) *
-                 contract_site(contract_site(state.H2_cntrctn, psi, H, H),
-                               psi, H, H)
+                 (psi, H, H) * (psi, H, H) * state.H2_cntrctn
         end
 
         state.energy = realize(energy)

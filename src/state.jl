@@ -35,7 +35,7 @@ function SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
     H_cntrctns = OffsetArray(Contraction{T,1}, 0:(L+1))
     H_cntrctns[L+1] = cap_contraction(T, Left, L, 1)
     for i in L:-1:3
-        H_cntrctns[i] = contract_site(H_cntrctns[i+1], psi, H)
+        H_cntrctns[i] = H_cntrctns[i+1] * (psi, H)
     end
     H_cntrctns[2] = dummy_contraction(T, 1)
     H_cntrctns[1] = dummy_contraction(T, 1)
