@@ -1,26 +1,13 @@
 """
-    dmrg_step!{L,T}(
-        H::MPO{L,T},
-        psi::MPS{L,T},
-        H_cntrctns::OffsetArray{Contraction{T,1},1},
-        dir::Direction,
-        site::Int,
-        set::SweepSettings)
+    dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
 
-Update `psi` by doing a two-site DMRG step in the direction `dir` at sites
-`site` and `site+1` using the Hamiltonian `H` and Hamiltonian contractions
-`H_cntrctns`.
+Update `state` by doing a two-site DMRG step with the parameters in `set`.
 """
-function dmrg_step!{L,T}(
-        H::MPO{L,T},
-        psi::MPS{L,T},
-        H_cntrctns::OffsetArray{Contraction{T,1},1},
-        dir::Direction,
-        site::Int,
-        set::SweepSettings)
+function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
+    psi, H, site = state.psi, state.H, state.site
 
-    left = H_cntrctns[site-1].tnsr
-    right = H_cntrctns[site+2].tnsr
+    left = state.H_cntrctns[site-1].tnsr
+    right = state.H_cntrctns[site+2].tnsr
 
     # The previous two-site wavefunction will be used as the starting vector:
     #
@@ -62,7 +49,6 @@ function dmrg_step!{L,T}(
         wf = vec(eigen[2])
     end
 
-    # Update the MPS.
     wf_mat = reshape(wf, prod(size(prev, 1, 2)), prod(size(prev, 3, 4)))
     U, S, V = svd(wf_mat)
     trunc_len = length(S)
@@ -78,25 +64,31 @@ function dmrg_step!{L,T}(
     # guaranteed that sum(S.^2) == 1. However, when we throw away some singular
     # values, we should renormalize.
     S ./= sqrt(sum(S[1:trunc_len].^2))
-    if dir == Right
+    # Reduced density matrix eigenvalues.
+    eigvals = S[1:trunc_len].^2
+
+    # Update the MPS.
+    if state.dir == Right
         A = U[:, 1:trunc_len]
         B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
-    elseif dir == Left
+    elseif state.dir == Left
         A = U[:, 1:trunc_len] * diagm(S[1:trunc_len])
         B = V[:, 1:trunc_len]'
     end
-    psi.tnsrs[site] = reshape(A, size(prev, 1), size(prev, 2), trunc_len)
-    psi.tnsrs[site+1] = reshape(B, trunc_len, size(prev, 3), size(prev, 4))
+    psi.tnsrs[site] = reshape(A, size(prev, 1, 2)..., trunc_len)
+    psi.tnsrs[site+1] = reshape(B, trunc_len, size(prev, 3, 4)...)
 
-    # Update the H contraction.
-    if dir == Right
-        H_cntrctns[site] = contract_site(H_cntrctns[site-1], psi, H)
-    elseif dir == Left
-        H_cntrctns[site+1] = contract_site(H_cntrctns[site+2], psi, H)
+    # Update the contractions.
+    if state.dir == Right
+        state.H_cntrctns[site] = contract_site(state.H_cntrctns[site-1],
+                                               psi, H)
+    elseif state.dir == Left
+        state.H_cntrctns[site+1] = contract_site(state.H_cntrctns[site+2],
+                                                 psi, H)
     end
+    state.H2_cntrctn = contract_site(state.H2_cntrctn, psi, H, H)
 
-    # Reduced density matrix eigenvalues.
-    S[1:trunc_len].^2
+    eigvals
 end
 
 
@@ -110,38 +102,58 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
     # At least 3 sites.
     L >= 3 || throw(DomainError())
 
-    # Initialize the H contractions for the first sweep.
-    H_cntrctns = OffsetArray(Contraction{T,1}, 0:(L+1))
-    H_cntrctns[L+1] = cap_contraction(T, Left, L, 1)
-    for i in L:-1:3
-        H_cntrctns[i] = contract_site(H_cntrctns[i+1], psi, H)
-    end
-    H_cntrctns[2] = dummy_contraction(T, 1)
-    H_cntrctns[1] = dummy_contraction(T, 1)
-    H_cntrctns[0] = cap_contraction(T, Right, L, 1)
-
+    state = SweepState(psi, H)
     sweep_details = SweepDetails[]
-    middle_eigvals = Float64[]
 
-    for n in 1:sch.num_sweeps
-        if n % 2 != 0
-            # Right sweep.
-            for i in 1:(L-2)
-                eigvals = dmrg_step!(H, psi, H_cntrctns, Right, i, sch[n])
-                i == div(L, 2) && (middle_eigvals = eigvals)
-            end
-            energy = contract_site(H_cntrctns[L-2], psi, H) * H_cntrctns[L]
-        else
-            # Left sweep.
-            for i in (L-1):-1:2
-                eigvals = dmrg_step!(H, psi, H_cntrctns, Left, i, sch[n])
-                i == div(L, 2) && (middle_eigvals = eigvals)
-            end
-            energy = H_cntrctns[1] * contract_site(H_cntrctns[3], psi, H)
+    converged = false
+    for n in 1:sch.max_sweeps
+        state.dir = flip(state.dir)
+        state.H2_cntrctn = cap_contraction(T, state.dir, L, 2)
+        if state.dir == Right
+            # 1 2 3 4 5
+            # ^ ^
+            #   ^ ^
+            #     ^ ^
+            range = 1:(L-2)
+        elseif state.dir == Left
+            # 1 2 3 4 5
+            #       ^ ^
+            #     ^ ^
+            #   ^ ^
+            range = (L-1):-1:2
         end
 
-        push!(sweep_details, SweepDetails(realize(energy), middle_eigvals))
+        # Sweep!
+        for i in range
+            state.site = i
+            eigvals = dmrg_step!(state, sch[n])
+            i == div(L, 2) && (state.middle_eigvals = eigvals)
+        end
+
+        if state.dir == Right
+            energy = contract_site(state.H_cntrctns[L-2], psi, H) *
+                     state.H_cntrctns[L]
+            H2 = contract_site(contract_site(state.H2_cntrctn, psi, H, H),
+                               psi, H, H) *
+                 cap_contraction(T, Left, L, 2)
+        elseif state.dir == Left
+            energy = state.H_cntrctns[1] *
+                     contract_site(state.H_cntrctns[3], psi, H)
+            H2 = cap_contraction(T, Right, L, 2) *
+                 contract_site(contract_site(state.H2_cntrctn, psi, H, H),
+                               psi, H, H)
+        end
+
+        state.energy = realize(energy)
+        state.dH2 = realize(H2)/energy^2 - 1.0
+
+        push!(sweep_details, SweepDetails(state))
+
+        if abs(state.dH2) <= sch.tolerance
+            converged = true
+            break
+        end
     end
 
-    SweepHistory(sweep_details)
+    SweepHistory(sweep_details, converged)
 end

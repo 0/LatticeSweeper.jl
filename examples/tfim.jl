@@ -20,9 +20,9 @@ s.autofix_names = true
         help = "number of sites"
         arg_type = Int
         required = true
-    "--num-sweeps"
+    "--max-sweeps"
         metavar = "S"
-        help = "number of sweeps"
+        help = "maximum number of sweeps"
         arg_type = Int
         required = true
 end
@@ -30,7 +30,7 @@ c = parse_args(ARGS, s, as_symbols=true)
 
 g = c[:g]
 L = c[:L]
-num_sweeps = c[:num_sweeps]
+max_sweeps = c[:max_sweeps]
 
 # Pauli matrices.
 id = [1.0 0.0; 0.0 1.0]
@@ -50,7 +50,8 @@ H = MPO(H_tnsr, L)
 spin_up = [1.0, 0.0]
 psi = MPS(spin_up, L)
 
-hist = dmrg!(psi, H, SweepSchedule(num_sweeps))
+hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+hist.converged || warn("Ground state not converged.")
 
 # Ground state energy.
 println("E0 = $(hist[end].energy)")

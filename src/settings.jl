@@ -44,8 +44,10 @@ end
 Schedule of parameters for multiple DMRG sweeps.
 """
 struct SweepSchedule
-    "Number of sweeps."
-    num_sweeps::Int
+    "Maximum number of sweeps."
+    max_sweeps::Int
+    "Wavefunction tolerance."
+    tolerance::Float64
 
     # SweepSettings parameters.
     num_iters::ForeverVector{Int}
@@ -55,14 +57,22 @@ struct SweepSchedule
 end
 
 """
-    SweepSchedule(num_sweeps; kwargs...)
+    SweepSchedule(max_sweeps::Int; tolerance=nothing, kwargs...)
 
-Create a `SweepSchedule` for `num_sweeps` sweeps, with optional parameters
+Create a `SweepSchedule` for `max_sweeps` sweeps, with optional parameters
 specified in `kwargs`.
 """
-function SweepSchedule(num_sweeps; kwargs...)
+function SweepSchedule(max_sweeps::Int; tolerance=nothing, kwargs...)
     # At least 1 sweep.
-    num_sweeps >= 1 || throw(DomainError())
+    max_sweeps >= 1 || throw(DomainError())
+
+    if tolerance !== nothing
+        # Non-negative tolerance.
+        tolerance >= 0.0 || throw(DomainError())
+    else
+        # Default.
+        tolerance = 1e-5
+    end
 
     kwargs = Dict(kwargs)
 
@@ -71,7 +81,8 @@ function SweepSchedule(num_sweeps; kwargs...)
     bond_max = ForeverVector(get(kwargs, :bond_max, 100))
     cutoff_max = ForeverVector(get(kwargs, :cutoff_max, 1e-10))
 
-    SweepSchedule(num_sweeps, num_iters, bond_min, bond_max, cutoff_max)
+    SweepSchedule(max_sweeps, tolerance,
+                  num_iters, bond_min, bond_max, cutoff_max)
 end
 
 Base.getindex(sch::SweepSchedule, i::Int) =

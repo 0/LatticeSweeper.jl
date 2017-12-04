@@ -1,4 +1,20 @@
 """
+    Direction
+
+Sweep or contraction direction.
+"""
+@enum Direction Left Right
+
+
+"""
+    flip(dir::Direction)
+
+Flip `dir` (`Left` to `Right` and back).
+"""
+flip(dir::Direction) = dir == Left ? Right : Left
+
+
+"""
     realize(x::Number)
 
 Make real, but carefully.
