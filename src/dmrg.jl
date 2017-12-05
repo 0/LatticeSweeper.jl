@@ -105,6 +105,8 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
 
     converged = false
     for n in 1:sch.max_sweeps
+        sweep_start_time = time()
+
         state.dir = flip(state.dir)
         state.H2_cntrctn = cap_contraction(T, state.dir, L, 2)
         if state.dir == Right
@@ -140,6 +142,7 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
 
         state.energy = realize(energy)
         state.dH2 = realize(H2)/energy^2 - 1.0
+        state.duration = time() - sweep_start_time
 
         push!(sweep_details, SweepDetails(state))
 

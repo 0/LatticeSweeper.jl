@@ -10,6 +10,9 @@ struct SweepDetails
     dH2::Float64
     "Eigenvalues across the middle bond."
     middle_eigvals::Vector{Float64}
+
+    "Duration of the sweep in seconds."
+    duration::Float64
 end
 
 """
@@ -18,7 +21,7 @@ end
 Create a `SweepDetails` using the values in `state`.
 """
 SweepDetails(state::SweepState) =
-    SweepDetails(state.energy, state.dH2, state.middle_eigvals)
+    SweepDetails(state.energy, state.dH2, state.middle_eigvals, state.duration)
 
 
 """
