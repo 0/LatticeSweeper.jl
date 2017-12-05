@@ -52,6 +52,8 @@ end
 Compress `o` by throwing away singular values below `cutoff_max` at each bond.
 """
 function compress!{L}(o::MPO{L}, cutoff_max::Float64)
+    bond_dimensions = Array{Int}(L-1)
+
     for range in [1:(L-2), (L-1):-1:1]
         for site in range
             # Combine adjacent tensors:
@@ -80,8 +82,10 @@ function compress!{L}(o::MPO{L}, cutoff_max::Float64)
             B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
             o.tnsrs[site] = reshape(A, size(M, 1, 2, 3)..., trunc_len)
             o.tnsrs[site+1] = reshape(B, trunc_len, size(M, 4, 5, 6)...)
+
+            bond_dimensions[site] = trunc_len
         end
     end
 
-    nothing
+    mean(bond_dimensions)
 end

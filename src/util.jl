@@ -33,3 +33,11 @@ end
 Von Neumann entropy of `eigvals`.
 """
 S_vn(eigvals::Vector{Float64}) = -sum(x * log(x) for x in eigvals if x > 0)
+
+
+"""
+    println_result(msg...)
+
+Output a result so that it stands out.
+"""
+println_result(msg...) = print_with_color(:green, msg..., "\n", bold=true)

@@ -95,7 +95,7 @@ for (k, OP1, OP2) in [(-2.0, [Lp, Lm], [Lp, Lm]),
 end
 K = length(ks)
 
-# Dipole chain Hamiltonian.
+println("[ ] Constructing Hamiltonian.")
 H_tnsr = zeros(2+(N-1)*K, 2+(N-1)*K, basis_size, basis_size)
 H_tnsr[1, 1, :, :] = id
 H_tnsr[2, 1, :, :] = L2
@@ -113,18 +113,23 @@ for i in 1:(N-2)
         H_tnsr[2+i*K+k, 2+(i-1)*K+k, :, :] = id
     end
 end
-H = MPO(H_tnsr, N)
-compress!(H, 1e-15)
+@time H = MPO(H_tnsr, N)
+@time mpo_mean_bond_dim = compress!(H, 1e-15)
+println("[+] Constructed Hamiltonian: $(mpo_mean_bond_dim).")
 
-# Starting wavefunction.
+println("[ ] Constructing wavefunction.")
 wf = zeros(basis_size)
 wf[1] = 1.0
-psi = MPS(wf, N)
+@time psi = MPS(wf, N)
+println("[+] Constructed wavefunction.")
 
-hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+println("[ ] Sweeping.")
+@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+println("[+] Swept.")
+
 hist.converged || warn("Ground state not converged.")
 
 # Ground state energy.
-println("E0 = $(hist[end].energy)")
+println_result("E0 = $(hist[end].energy)")
 # Von Neumann entanglement entropy.
-println("SvN = $(S_vn(hist[end].middle_eigvals))")
+println_result("SvN = $(S_vn(hist[end].middle_eigvals))")

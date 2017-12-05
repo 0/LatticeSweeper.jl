@@ -6,6 +6,7 @@ using TensorOperations
 
 export
     S_vn,
+    println_result,
 
     MPS,
     MPO,

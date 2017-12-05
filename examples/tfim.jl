@@ -37,23 +37,28 @@ id = [1.0 0.0; 0.0 1.0]
 sigma_x = [0.0 1.0; 1.0 0.0]
 sigma_z = [1.0 0.0; 0.0 -1.0]
 
-# Transverse field Ising model Hamiltonian.
+println("[ ] Constructing Hamiltonian.")
 H_tnsr = zeros(3, 3, 2, 2)
 H_tnsr[1, 1, :, :] = id
 H_tnsr[2, 1, :, :] = -g*sigma_x
 H_tnsr[2, 2, :, :] = id
 H_tnsr[2, 3, :, :] = -sigma_z
 H_tnsr[3, 1, :, :] = sigma_z
-H = MPO(H_tnsr, L)
+@time H = MPO(H_tnsr, L)
+println("[+] Constructed Hamiltonian.")
 
-# Starting wavefunction.
+println("[ ] Constructing wavefunction.")
 spin_up = [1.0, 0.0]
-psi = MPS(spin_up, L)
+@time psi = MPS(spin_up, L)
+println("[+] Constructed wavefunction.")
 
-hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+println("[ ] Sweeping.")
+@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+println("[+] Swept.")
+
 hist.converged || warn("Ground state not converged.")
 
 # Ground state energy.
-println("E0 = $(hist[end].energy)")
+println_result("E0 = $(hist[end].energy)")
 # Von Neumann entanglement entropy.
-println("SvN = $(S_vn(hist[end].middle_eigvals))")
+println_result("SvN = $(S_vn(hist[end].middle_eigvals))")
