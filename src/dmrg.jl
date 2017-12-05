@@ -102,8 +102,8 @@ parameters specified in `sch`.
 """
 function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
                     outputs::Vector{<:SweepOutput}=SweepOutput[])
-    # At least 3 sites.
-    L >= 3 || throw(DomainError())
+    # At least 2 sites.
+    L >= 2 || throw(DomainError())
 
     state = SweepState(psi, H)
     sweep_details = SweepDetails[]
@@ -117,20 +117,30 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
         set = sch[n]
 
         state.sweep_num = n
-        state.dir = flip(state.dir)
+        if L == 2
+            state.dir = Right
+        else
+            state.dir = flip(state.dir)
+        end
         state.H2_cntrctn = cap_contraction(T, state.dir, L, 2)
-        if state.dir == Right
-            # 1 2 3 4 5
+        if L == 2
+            # 1 2
             # ^ ^
-            #   ^ ^
-            #     ^ ^
-            range = 1:(L-2)
-        elseif state.dir == Left
-            # 1 2 3 4 5
-            #       ^ ^
-            #     ^ ^
-            #   ^ ^
-            range = (L-1):-1:2
+            range = 1:1
+        else
+            if state.dir == Right
+                # 1 2 3 4 5
+                # ^ ^
+                #   ^ ^
+                #     ^ ^
+                range = 1:(L-2)
+            elseif state.dir == Left
+                # 1 2 3 4 5
+                #       ^ ^
+                #     ^ ^
+                #   ^ ^
+                range = (L-1):-1:2
+            end
         end
 
         # Sweep!
@@ -142,14 +152,20 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
             step.(outputs, state)
         end
 
-        if state.dir == Right
-            energy = state.H_cntrctns[L-2] * (psi, H) * state.H_cntrctns[L]
-            H2 = state.H2_cntrctn * (psi, H, H) * (psi, H, H) *
+        if L == 2
+            energy = state.H_cntrctns[1] * (psi, H) * state.H_cntrctns[L+1]
+            H2 = state.H2_cntrctn * (psi, H, H) *
                  cap_contraction(T, Left, L, 2)
-        elseif state.dir == Left
-            energy = state.H_cntrctns[1] * (psi, H) * state.H_cntrctns[3]
-            H2 = cap_contraction(T, Right, L, 2) *
-                 (psi, H, H) * (psi, H, H) * state.H2_cntrctn
+        else
+            if state.dir == Right
+                energy = state.H_cntrctns[L-2] * (psi, H) * state.H_cntrctns[L]
+                H2 = state.H2_cntrctn * (psi, H, H) * (psi, H, H) *
+                     cap_contraction(T, Left, L, 2)
+            elseif state.dir == Left
+                energy = state.H_cntrctns[1] * (psi, H) * state.H_cntrctns[3]
+                H2 = cap_contraction(T, Right, L, 2) *
+                     (psi, H, H) * (psi, H, H) * state.H2_cntrctn
+            end
         end
 
         state.energy = realize(energy)
