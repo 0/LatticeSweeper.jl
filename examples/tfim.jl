@@ -67,6 +67,9 @@ push!(outputs, SweepOutputDynamic())
 println("[+] Swept.")
 
 hist.converged || warn("Ground state not converged.")
+if hist[end].mps_max_bond_dim >= hist[end].set.bond_max
+    warn("Bond dimension saturated at final sweep.")
+end
 
 # Ground state energy.
 println_result("E0 = $(hist[end].energy)")

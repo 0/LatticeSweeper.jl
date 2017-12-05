@@ -51,7 +51,7 @@ Create a `SweepOutputFile` that will write to `path`.
 SweepOutputFile(path::String) = SweepOutputFile(open(path, "w"))
 
 function init(so::SweepOutputFile)
-    println(so.io, "# sweep_num energy dH2 SvN duration")
+    println(so.io, "# sweep_num energy dH2 SvN mps_max_bond_dim duration")
     flush(so.io)
 
     nothing
@@ -59,7 +59,8 @@ end
 
 function sweep(so::SweepOutputFile, state::SweepState)
     items = Any[state.sweep_num, state.energy, state.dH2,
-                S_vn(state.middle_eigvals), state.duration]
+                S_vn(state.middle_eigvals), state.mps_max_bond_dim,
+                state.duration]
     println(so.io, join(items, " "))
     flush(so.io)
 
@@ -90,7 +91,7 @@ SweepOutputDynamic(time_step::Float64=0.1) = SweepOutputDynamic(time_step, 0.0)
 function init(::SweepOutputDynamic)
     println()
 
-    for _ in 1:6
+    for _ in 1:7
         println()
     end
 
@@ -101,7 +102,7 @@ function make_string{L}(::SweepOutputDynamic, state::SweepState{L};
                         sweep=false)
     io = IOBuffer()
 
-    for _ in 1:6
+    for _ in 1:7
         # Go up, clear line.
         print(io, "\u1b[A\u1b[K")
     end
@@ -140,6 +141,7 @@ function make_string{L}(::SweepOutputDynamic, state::SweepState{L};
         @printf(io, "on sweep %d at site %d of %d\n",
                 state.sweep_num, state.site, L)
     end
+    @printf(io, "maximum MPS bond dimension is %d\n", state.mps_max_bond_dim)
     if isnan(state.duration)
         println(io, "")
     else

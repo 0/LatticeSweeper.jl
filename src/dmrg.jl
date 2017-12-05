@@ -86,6 +86,9 @@ function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
     end
     state.H2_cntrctn = state.H2_cntrctn * (psi, H, H)
 
+    # Update the maximum bond dimension.
+    state.mps_max_bond_dim = maximum(size(tnsr, 3) for tnsr in psi.tnsrs)
+
     eigvals
 end
 
@@ -111,6 +114,8 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
     for n in 1:sch.max_sweeps
         sweep_start_time = time()
 
+        set = sch[n]
+
         state.sweep_num = n
         state.dir = flip(state.dir)
         state.H2_cntrctn = cap_contraction(T, state.dir, L, 2)
@@ -131,7 +136,7 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
         # Sweep!
         for i in range
             state.site = i
-            eigvals = dmrg_step!(state, sch[n])
+            eigvals = dmrg_step!(state, set)
             i == div(L, 2) && (state.middle_eigvals = eigvals)
 
             step.(outputs, state)
@@ -151,7 +156,7 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
         state.dH2 = realize(H2)/energy^2 - 1.0
         state.duration = time() - sweep_start_time
 
-        push!(sweep_details, SweepDetails(state))
+        push!(sweep_details, SweepDetails(set, state))
 
         sweep.(outputs, state)
 

@@ -25,6 +25,7 @@ mutable struct SweepState{L,T}
     energy::Float64
     dH2::Float64
     middle_eigvals::Vector{Float64}
+    mps_max_bond_dim::Int
     duration::Float64
 end
 
@@ -46,5 +47,5 @@ function SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
 
     # Use dummy values for parameters that we don't know yet.
     SweepState(psi, H, -1, -1, Left, H_cntrctns, dummy_contraction(T, 2),
-               NaN, NaN, Float64[], NaN)
+               NaN, NaN, Float64[], -1, NaN)
 end

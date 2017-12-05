@@ -4,6 +4,9 @@
 Details of a single DMRG sweep.
 """
 struct SweepDetails
+    "Settings for the sweep."
+    set::SweepSettings
+
     "Total energy of the state."
     energy::Float64
     "Normalized fluctuation of the energy: `<(H - <H>)^2>/<H>^2`."
@@ -11,17 +14,21 @@ struct SweepDetails
     "Eigenvalues across the middle bond."
     middle_eigvals::Vector{Float64}
 
+    "Maximum wavefunction bond dimension."
+    mps_max_bond_dim::Int
+
     "Duration of the sweep in seconds."
     duration::Float64
 end
 
 """
-    SweepDetails(state::SweepState)
+    SweepDetails(set::SweepSettings, state::SweepState)
 
-Create a `SweepDetails` using the values in `state`.
+Create a `SweepDetails` for settings `set` using the values in `state`.
 """
-SweepDetails(state::SweepState) =
-    SweepDetails(state.energy, state.dH2, state.middle_eigvals, state.duration)
+SweepDetails(set::SweepSettings, state::SweepState) =
+    SweepDetails(set, state.energy, state.dH2, state.middle_eigvals,
+                 state.mps_max_bond_dim, state.duration)
 
 
 """
