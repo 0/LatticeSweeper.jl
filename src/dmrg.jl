@@ -91,22 +91,27 @@ end
 
 
 """
-    dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
+    dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
+               outputs::Vector{<:SweepOutput}=SweepOutput[])
 
 Perform two-site DMRG on the state `psi` using the Hamiltonian `H` with
 parameters specified in `sch`.
 """
-function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
+function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
+                    outputs::Vector{<:SweepOutput}=SweepOutput[])
     # At least 3 sites.
     L >= 3 || throw(DomainError())
 
     state = SweepState(psi, H)
     sweep_details = SweepDetails[]
 
+    init.(outputs)
+
     converged = false
     for n in 1:sch.max_sweeps
         sweep_start_time = time()
 
+        state.sweep_num = n
         state.dir = flip(state.dir)
         state.H2_cntrctn = cap_contraction(T, state.dir, L, 2)
         if state.dir == Right
@@ -128,6 +133,8 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
             state.site = i
             eigvals = dmrg_step!(state, sch[n])
             i == div(L, 2) && (state.middle_eigvals = eigvals)
+
+            step.(outputs, state)
         end
 
         if state.dir == Right
@@ -146,11 +153,15 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
 
         push!(sweep_details, SweepDetails(state))
 
+        sweep.(outputs, state)
+
         if abs(state.dH2) <= sch.tolerance
             converged = true
             break
         end
     end
+
+    done.(outputs)
 
     SweepHistory(sweep_details, converged)
 end

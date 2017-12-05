@@ -9,6 +9,8 @@ mutable struct SweepState{L,T}
     "Hamiltonian."
     H::MPO{L,T}
 
+    "Sweep counter."
+    sweep_num::Int
     "Site index."
     site::Int
     "Sweep direction."
@@ -43,6 +45,6 @@ function SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
     H_cntrctns[0] = cap_contraction(T, Right, L, 1)
 
     # Use dummy values for parameters that we don't know yet.
-    SweepState(psi, H, -1, Left, H_cntrctns, dummy_contraction(T, 2),
+    SweepState(psi, H, -1, -1, Left, H_cntrctns, dummy_contraction(T, 2),
                NaN, NaN, Float64[], NaN)
 end

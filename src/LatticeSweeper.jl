@@ -13,6 +13,9 @@ export
     compress!,
 
     SweepSchedule,
+    SweepOutput,
+    SweepOutputFile,
+    SweepOutputDynamic,
     dmrg!
 
 include("util.jl")
@@ -24,6 +27,7 @@ include("contraction.jl")
 include("settings.jl")
 include("state.jl")
 include("history.jl")
+include("output.jl")
 
 include("dmrg.jl")
 

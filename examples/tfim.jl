@@ -25,12 +25,17 @@ s.autofix_names = true
         help = "maximum number of sweeps"
         arg_type = Int
         required = true
+    "--output-file"
+        metavar = "PATH"
+        help = "path to output file"
+        arg_type = String
 end
 c = parse_args(ARGS, s, as_symbols=true)
 
 g = c[:g]
 L = c[:L]
 max_sweeps = c[:max_sweeps]
+output_file = c[:output_file]
 
 # Pauli matrices.
 id = [1.0 0.0; 0.0 1.0]
@@ -53,7 +58,12 @@ spin_up = [1.0, 0.0]
 println("[+] Constructed wavefunction.")
 
 println("[ ] Sweeping.")
-@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps))
+outputs = SweepOutput[]
+if output_file !== nothing
+    push!(outputs, SweepOutputFile(output_file))
+end
+push!(outputs, SweepOutputDynamic())
+@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps), outputs=outputs)
 println("[+] Swept.")
 
 hist.converged || warn("Ground state not converged.")
