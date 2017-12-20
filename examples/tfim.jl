@@ -50,7 +50,9 @@ H = MPO(H_tnsr, L)
 spin_up = [1.0, 0.0]
 psi = MPS(spin_up, L)
 
-E0 = dmrg!(psi, H, SweepSchedule(num_sweeps))
+hist = dmrg!(psi, H, SweepSchedule(num_sweeps))
 
 # Ground state energy.
-println("E0 = ", E0)
+println("E0 = $(hist[end].energy)")
+# Von Neumann entanglement entropy.
+println("SvN = $(S_vn(hist[end].middle_eigvals))")

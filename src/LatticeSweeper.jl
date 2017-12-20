@@ -5,8 +5,11 @@ using OffsetArrays
 using TensorOperations
 
 export
+    S_vn,
+
     MPS,
     MPO,
+
     SweepSchedule,
     dmrg!
 
@@ -22,6 +25,7 @@ include("mpo.jl")
 include("contraction.jl")
 
 include("settings.jl")
+include("history.jl")
 
 include("dmrg.jl")
 

@@ -95,7 +95,8 @@ function dmrg_step!{L,T}(
         H_cntrctns[site+1] = contract_site(H_cntrctns[site+2], psi, H)
     end
 
-    nothing
+    # Reduced density matrix eigenvalues.
+    S[1:trunc_len].^2
 end
 
 
@@ -119,27 +120,28 @@ function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule)
     H_cntrctns[1] = dummy_contraction(T, 1)
     H_cntrctns[0] = cap_contraction(T, Right, L, 1)
 
+    sweep_details = SweepDetails[]
+    middle_eigvals = Float64[]
+
     for n in 1:sch.num_sweeps
         if n % 2 != 0
             # Right sweep.
             for i in 1:(L-2)
-                dmrg_step!(H, psi, H_cntrctns, Right, i, sch[n])
+                eigvals = dmrg_step!(H, psi, H_cntrctns, Right, i, sch[n])
+                i == div(L, 2) && (middle_eigvals = eigvals)
             end
+            energy = contract_site(H_cntrctns[L-2], psi, H) * H_cntrctns[L]
         else
             # Left sweep.
             for i in (L-1):-1:2
-                dmrg_step!(H, psi, H_cntrctns, Left, i, sch[n])
+                eigvals = dmrg_step!(H, psi, H_cntrctns, Left, i, sch[n])
+                i == div(L, 2) && (middle_eigvals = eigvals)
             end
+            energy = H_cntrctns[1] * contract_site(H_cntrctns[3], psi, H)
         end
+
+        push!(sweep_details, SweepDetails(realize(energy), middle_eigvals))
     end
 
-    if sch.num_sweeps % 2 == 0
-        # Ended on the left.
-        E0 = H_cntrctns[1] * contract_site(H_cntrctns[3], psi, H)
-    else
-        # Ended on the right.
-        E0 = contract_site(H_cntrctns[L-2], psi, H) * H_cntrctns[L]
-    end
-
-    realize(E0)
+    SweepHistory(sweep_details)
 end

@@ -9,3 +9,11 @@ function realize(x::Complex)
     abs(imag(x)) < 1e-14 || error("Non-zero imaginary component")
     real(x)
 end
+
+
+"""
+    S_vn(eigvals::Vector{Float64})
+
+Von Neumann entropy of `eigvals`.
+"""
+S_vn(eigvals::Vector{Float64}) = -sum(x * log(x) for x in eigvals if x > 0)
