@@ -1,6 +1,7 @@
 # LatticeSweeper.jl
 
-Two-site DMRG without any bells or whistles.
+Simple two-site DMRG.
+No support for quantum number conservation.
 
 Tested with Julia 0.6.
 
