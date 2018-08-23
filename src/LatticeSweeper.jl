@@ -1,8 +1,8 @@
 module LatticeSweeper
 
-using LinearMaps
-using OffsetArrays
-using TensorOperations
+using LinearMaps: LinearMap
+using OffsetArrays: OffsetArray
+using TensorOperations: @tensor
 
 export
     S_vn,
