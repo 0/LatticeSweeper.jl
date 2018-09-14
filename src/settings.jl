@@ -63,12 +63,12 @@ Create a `SweepSchedule` for `max_sweeps` sweeps, with optional parameters
 specified in `kwargs`.
 """
 function SweepSchedule(max_sweeps::Int; tolerance=nothing, kwargs...)
-    # At least 1 sweep.
-    max_sweeps >= 1 || throw(DomainError())
+    max_sweeps >= 1 || throw(DomainError(max_sweeps, "At least 1 sweep."))
 
     if tolerance !== nothing
-        # Non-negative tolerance.
-        tolerance >= 0.0 || throw(DomainError())
+        if tolerance < 0.0
+            throw(DomainError(tolerance, "Non-negative tolerance."))
+        end
     else
         # Default.
         tolerance = 1e-5

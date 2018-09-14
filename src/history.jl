@@ -43,6 +43,6 @@ struct SweepHistory
     converged::Bool
 end
 
-Base.endof(hist::SweepHistory) = length(hist.details)
 Base.getindex(hist::SweepHistory, i::Int) = hist.details[i]
+Base.lastindex(hist::SweepHistory) = length(hist.details)
 Base.length(hist::SweepHistory) = length(hist.details)

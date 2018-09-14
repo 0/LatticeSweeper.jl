@@ -1,28 +1,26 @@
-# LatticeSweeper.jl
+# LatticeSweeper
 
 Simple two-site DMRG.
 No support for quantum number conservation.
 
-Tested with Julia 0.6.
+Tested with Julia 1.0.
 
 
 ## Installation
 
-1. `Pkg.clone("https://github.com/0/LatticeSweeper.jl.git")`
+```
+pkg> add https://github.com/0/LatticeSweeper.jl.git
+```
 
-
-### Requirements
-
-These should be pulled in automatically when installing this package.
-To use it without installing it (e.g. from a local git checkout), you'll need to manually obtain the following dependencies:
-
-* ArgParse (`Pkg.add("ArgParse")`)
-* LinearMaps (`Pkg.add("LinearMaps")`)
-* OffsetArrays (`Pkg.add("OffsetArrays")`)
-* TensorOperations (`Pkg.add("TensorOperations")`)
+In order to run the example scripts in `examples/`, you will also need to
+```
+pkg> add ArgParse
+```
 
 
 ## Examples
+
+To run the following examples, you should set the project (e.g. using `--project` or `JULIA_PROJECT`) to a Julia project that has the prerequisites installed.
 
 * `julia examples/tfim.jl --help`
 * `julia --color=yes examples/tfim.jl -g 1.0 -L 8 --max-sweeps 4`

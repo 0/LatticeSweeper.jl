@@ -3,7 +3,10 @@
 
 Sweep or contraction direction.
 """
-@enum Direction Left Right
+@enum Direction begin
+    Left
+    Right
+end
 
 
 """
@@ -40,4 +43,4 @@ S_vn(eigvals::Vector{Float64}) = -sum(x * log(x) for x in eigvals if x > 0)
 
 Output a result so that it stands out.
 """
-println_result(msg...) = print_with_color(:green, msg..., "\n", bold=true)
+println_result(msg...) = printstyled(msg..., "\n"; color=:green, bold=true)

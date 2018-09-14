@@ -1,9 +1,9 @@
 """
-    dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
+    dmrg_step!(state::SweepState{L,T}, set::SweepSettings)
 
 Update `state` by doing a two-site DMRG step with the parameters in `set`.
 """
-function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
+function dmrg_step!(state::SweepState{L,T}, set::SweepSettings) where {L,T}
     psi, H, site = state.psi, state.H, state.site
 
     left = state.H_cntrctns[site-1].tnsr
@@ -42,14 +42,15 @@ function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
     # Hamiltonian by using a sparse diagonalizer. Since there's no way to
     # request a specific number of iterations, we just say we're converged
     # after a single iteration and repeat several times.
-    eigen = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=vec(prev))
-    wf = vec(eigen[2])
+    F = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=vec(prev))
+    wf = vec(F[2])
     for _ in 1:(set.num_iters-1)
-        eigen = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=wf)
-        wf = vec(eigen[2])
+        F = eigs(H_map; nev=1, which=:SR, tol=Inf, maxiter=1, v0=wf)
+        wf = vec(F[2])
     end
 
-    wf_mat = reshape(wf, prod(size(prev, 1, 2)), prod(size(prev, 3, 4)))
+    wf_mat = reshape(wf, size(prev, 1) * size(prev, 2),
+                         size(prev, 3) * size(prev, 4))
     U, S, V = svd(wf_mat)
     trunc_len = length(S)
     trunc_cutoff = 0.0
@@ -70,13 +71,13 @@ function dmrg_step!{L,T}(state::SweepState{L,T}, set::SweepSettings)
     # Update the MPS.
     if state.dir == Right
         A = U[:, 1:trunc_len]
-        B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
+        B = diagm(0 => S[1:trunc_len]) * V[:, 1:trunc_len]'
     elseif state.dir == Left
-        A = U[:, 1:trunc_len] * diagm(S[1:trunc_len])
+        A = U[:, 1:trunc_len] * diagm(0 => S[1:trunc_len])
         B = V[:, 1:trunc_len]'
     end
-    psi.tnsrs[site] = reshape(A, size(prev, 1, 2)..., trunc_len)
-    psi.tnsrs[site+1] = reshape(B, trunc_len, size(prev, 3, 4)...)
+    psi.tnsrs[site] = reshape(A, size(prev, 1), size(prev, 2), trunc_len)
+    psi.tnsrs[site+1] = reshape(B, trunc_len, size(prev, 3), size(prev, 4))
 
     # Update the contractions.
     if state.dir == Right
@@ -94,16 +95,15 @@ end
 
 
 """
-    dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
-               outputs::Vector{<:SweepOutput}=SweepOutput[])
+    dmrg!(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
+          outputs::Vector{<:SweepOutput}=SweepOutput[])
 
 Perform two-site DMRG on the state `psi` using the Hamiltonian `H` with
 parameters specified in `sch`.
 """
-function dmrg!{L,T}(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
-                    outputs::Vector{<:SweepOutput}=SweepOutput[])
-    # At least 2 sites.
-    L >= 2 || throw(DomainError())
+function dmrg!(psi::MPS{L,T}, H::MPO{L,T}, sch::SweepSchedule;
+               outputs::Vector{<:SweepOutput}=SweepOutput[]) where {L,T}
+    L >= 2 || throw(DomainError(L, "At least 2 sites."))
 
     state = SweepState(psi, H)
     sweep_details = SweepDetails[]

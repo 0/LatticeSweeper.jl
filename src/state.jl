@@ -30,13 +30,13 @@ mutable struct SweepState{L,T}
 end
 
 """
-    SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
+    SweepState(psi::MPS{L,T}, H::MPO{L,T})
 
 Generate a blank `SweepState` for wavefunction `psi` and Hamiltonian `H`.
 """
-function SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
+function SweepState(psi::MPS{L,T}, H::MPO{L,T}) where {L,T}
     # Initialize the H contractions for the first sweep.
-    H_cntrctns = OffsetArray(Contraction{T,1}, 0:(L+1))
+    H_cntrctns = OffsetArray{Contraction{T,1}}(undef, 0:(L+1))
     H_cntrctns[L+1] = cap_contraction(T, Left, L, 1)
     for i in L:-1:3
         H_cntrctns[i] = H_cntrctns[i+1] * (psi, H)
@@ -49,3 +49,5 @@ function SweepState{L,T}(psi::MPS{L,T}, H::MPO{L,T})
     SweepState(psi, H, -1, -1, Left, H_cntrctns, dummy_contraction(T, 2),
                NaN, NaN, Float64[], -1, NaN)
 end
+
+Base.broadcastable(x::SweepState) = Ref(x)

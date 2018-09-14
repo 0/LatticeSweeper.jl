@@ -2,7 +2,6 @@
 
 # Dipole chain DMRG example.
 
-push!(LOAD_PATH, joinpath(dirname(@__FILE__), "../src"))
 using LatticeSweeper
 
 using ArgParse
@@ -137,9 +136,9 @@ push!(outputs, SweepOutputDynamic())
 @time hist = dmrg!(psi, H, SweepSchedule(max_sweeps); outputs=outputs)
 println("[+] Swept.")
 
-hist.converged || warn("Ground state not converged.")
+hist.converged || @warn("Ground state not converged.")
 if hist[end].mps_max_bond_dim >= hist[end].set.bond_max
-    warn("Bond dimension saturated at final sweep.")
+    @warn("Bond dimension saturated at final sweep.")
 end
 
 # Ground state energy.

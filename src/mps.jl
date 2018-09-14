@@ -18,15 +18,15 @@ struct MPS{L,T<:Number}
 end
 
 """
-    MPS{T}(vs::Vector{Vector{T}})
+    MPS(vs::Vector{Vector{T}})
 
 Create an `MPS` representing a product state (all bonds have dimension 1),
 where each site is described by the corresponding element of `vs`.
 """
-function MPS{T}(vs::Vector{Vector{T}})
+function MPS(vs::Vector{Vector{T}}) where {T}
     L = length(vs)
 
-    tnsrs = Vector{Array{T,3}}(L)
+    tnsrs = Vector{Array{T,3}}(undef, L)
     for i in 1:L
         tnsrs[i] = reshape(copy(vs[i]), 1, :, 1)
     end
@@ -35,9 +35,9 @@ function MPS{T}(vs::Vector{Vector{T}})
 end
 
 """
-    MPS{T}(v::Vector{T}, L)
+    MPS(v::Vector{T}, L)
 
 Create an `MPS` for `L` sites representing a uniform product state (all bonds
 have dimension 1), where each site is described by `v`.
 """
-MPS{T}(v::Vector{T}, L) = MPS([v for _ in 1:L])
+MPS(v::Vector{T}, L) where {T} = MPS([v for _ in 1:L])

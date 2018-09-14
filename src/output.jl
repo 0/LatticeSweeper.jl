@@ -98,8 +98,8 @@ function init(::SweepOutputDynamic)
     nothing
 end
 
-function make_string{L}(::SweepOutputDynamic, state::SweepState{L};
-                        sweep=false)
+function make_string(::SweepOutputDynamic, state::SweepState{L};
+                     sweep=false) where {L}
     io = IOBuffer()
 
     for _ in 1:7
@@ -119,19 +119,19 @@ function make_string{L}(::SweepOutputDynamic, state::SweepState{L};
 
     print(io, "[")
     for j in 1:(site_eff-1)
-        print_with_color(:blue, io, "-")
+        printstyled(io, "-"; color=:blue)
     end
     if sweep
-        print_with_color(:blue, io, "--")
+        printstyled(io, "--"; color=:blue)
     else
         if state.dir == Right
-            print_with_color(:red, io, ">>")
+            printstyled(io, ">>"; color=:red)
         elseif state.dir == Left
-            print_with_color(:red, io, "<<")
+            printstyled(io, "<<"; color=:red)
         end
     end
     for j in (site_eff+2):L_eff
-        print_with_color(:blue, io, "-")
+        printstyled(io, "-"; color=:blue)
     end
     print(io, "]\n")
 
@@ -167,7 +167,7 @@ function make_string{L}(::SweepOutputDynamic, state::SweepState{L};
     io |> take! |> String
 end
 
-function step{L}(so::SweepOutputDynamic, state::SweepState{L})
+function step(so::SweepOutputDynamic, state::SweepState{L}) where {L}
     time_now = time()
     time_now >= so.time_prev + so.time_step || return
 
@@ -178,7 +178,7 @@ function step{L}(so::SweepOutputDynamic, state::SweepState{L})
     nothing
 end
 
-function sweep{L}(so::SweepOutputDynamic, state::SweepState{L})
+function sweep(so::SweepOutputDynamic, state::SweepState{L}) where {L}
     time_now = time()
 
     print(make_string(so, state; sweep=true))

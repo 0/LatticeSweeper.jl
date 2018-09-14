@@ -1,5 +1,10 @@
 module LatticeSweeper
 
+using LinearAlgebra: diagm, svd
+using Printf: @printf
+using Statistics: mean
+
+using Arpack: eigs
 using LinearMaps: LinearMap
 using OffsetArrays: OffsetArray
 using TensorOperations: @tensor

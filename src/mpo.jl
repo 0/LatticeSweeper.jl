@@ -20,7 +20,7 @@ struct MPO{L,T<:Number}
 end
 
 """
-    MPO{T}(x::Array{T,4}, L)
+    MPO(x::Array{T,4}, L)
 
 Create an `MPO` for `L` sites with all interior sites containing the tensor
 `x`. The tensor is assumed to have the usual matrix-of-operators structure,
@@ -28,11 +28,10 @@ with the first two indices being the bond (matrix) dimension and the last two
 indices being the physical (operator) dimension. The first and last sites only
 use the second (not last!) row and first column of `x`, respectively.
 """
-function MPO{T}(x::Array{T,4}, L)
-    # At least 2 sites.
-    L >= 2 || throw(DomainError())
+function MPO(x::Array{T,4}, L) where {T}
+    L >= 2 || throw(DomainError(L, "At least 2 sites."))
 
-    tnsrs = Vector{Array{T,4}}(L)
+    tnsrs = Vector{Array{T,4}}(undef, L)
     # Row vector.
     tnsrs[1] = permutedims(x[2:2, :, :, :], (1, 3, 4, 2))
     for i in 2:(L-1)
@@ -47,12 +46,12 @@ end
 
 
 """
-    compress!{L}(o::MPO{L}, cutoff_max::Float64)
+    compress!(o::MPO{L}, cutoff_max::Float64)
 
 Compress `o` by throwing away singular values below `cutoff_max` at each bond.
 """
-function compress!{L}(o::MPO{L}, cutoff_max::Float64)
-    bond_dimensions = Array{Int}(L-1)
+function compress!(o::MPO{L}, cutoff_max::Float64) where {L}
+    bond_dimensions = Array{Int}(undef, L-1)
 
     for range in [1:(L-2), (L-1):-1:1]
         for site in range
@@ -65,7 +64,8 @@ function compress!{L}(o::MPO{L}, cutoff_max::Float64)
             #        m     o
             @tensor M[a, m, n, o, p, c] :=
                 o.tnsrs[site][a, m, n, b] * o.tnsrs[site+1][b, o, p, c]
-            M_mat = reshape(M, prod(size(M, 1, 2, 3)), prod(size(M, 4, 5, 6)))
+            M_mat = reshape(M, size(M, 1) * size(M, 2) * size(M, 3),
+                               size(M, 4) * size(M, 5) * size(M, 6))
 
             U, S, V = svd(M_mat)
             # Operators are not normalized in general, so we should not expect
@@ -79,9 +79,11 @@ function compress!{L}(o::MPO{L}, cutoff_max::Float64)
                 trunc_len -= 1
             end
             A = U[:, 1:trunc_len]
-            B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
-            o.tnsrs[site] = reshape(A, size(M, 1, 2, 3)..., trunc_len)
-            o.tnsrs[site+1] = reshape(B, trunc_len, size(M, 4, 5, 6)...)
+            B = diagm(0 => S[1:trunc_len]) * V[:, 1:trunc_len]'
+            o.tnsrs[site] = reshape(A, size(M, 1), size(M, 2), size(M, 3),
+                                       trunc_len)
+            o.tnsrs[site+1] = reshape(B, trunc_len,
+                                         size(M, 4), size(M, 5), size(M, 6))
 
             bond_dimensions[site] = trunc_len
         end

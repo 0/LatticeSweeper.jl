@@ -26,34 +26,34 @@ struct Contraction{T<:Number,N,dir}
 end
 
 """
-    Contraction{T,N}(dir::Direction, site::Int, tnsr::Array{T,N})
+    Contraction(dir::Direction, site::Int, tnsr::Array{T,N})
 
 Make a `Contraction` up to site `site` going in the direction `dir` and
 containing the elements `tnsr`.
 """
-Contraction{T,N}(dir::Direction, site::Int, tnsr::Array{T,N}) =
+Contraction(dir::Direction, site::Int, tnsr::Array{T,N}) where {T,N} =
     Contraction{T,N-2,dir}(site, tnsr)
 
 """
-    cap_contraction{T}(::Type{T}, dir::Direction, L::Int, num_mpos::Int)
+    cap_contraction(::Type{T}, dir::Direction, L::Int, num_mpos::Int)
 
 Make a cap `Contraction` of type `T` going in the direction `dir` for `L` sites
 and `num_mpos` `MPO`s.
 """
-cap_contraction{T}(::Type{T}, dir::Direction, L::Int, num_mpos::Int) =
-    Contraction(dir, dir == Right ? 0 : L+1, ones(T, ones(num_mpos+2)...))
+cap_contraction(::Type{T}, dir::Direction, L::Int, num_mpos::Int) where {T} =
+    Contraction(dir, dir == Right ? 0 : L+1, ones(T, ones(Int, num_mpos+2)...))
 
 """
-    dummy_contraction{T}(::Type{T}, num_mpos::Int)
+    dummy_contraction(::Type{T}, num_mpos::Int)
 
 Make a dummy `Contraction` of type `T` for `num_mpos` `MPO`s.
 """
-dummy_contraction{T}(::Type{T}, num_mpos::Int) =
-    Contraction(Left, -1, zeros(T, ones(num_mpos+2)...))
+dummy_contraction(::Type{T}, num_mpos::Int) where {T} =
+    Contraction(Left, -1, zeros(T, ones(Int, num_mpos+2)...))
 
 
 """
-    contract_site{T,N,dir,L}(
+    contract_site(
         cntrctn::Contraction{T,N,dir},
         s1::MPS{L,T},
         s2::MPS{L,T},
@@ -62,11 +62,11 @@ dummy_contraction{T}(::Type{T}, num_mpos::Int) =
 Contract the next site of `MPS` `s1`, `MPS` `s2`, and `MPO`s `os` into
 `cntrctn`, producing a new `Contraction`.
 """
-@generated function contract_site{T,N,dir,L}(
+@generated function contract_site(
         cntrctn::Contraction{T,N,dir},
         s1::MPS{L,T},
         s2::MPS{L,T},
-        os::Vararg{MPO{L,T},N})
+        os::Vararg{MPO{L,T},N}) where {T,N,dir,L}
 
     # tnsr[i_s1, i_1, ..., i_N, i_s2]
     input = :(tnsr[i_s1])
@@ -123,7 +123,7 @@ Contract the next site of `MPS` `s1`, `MPS` `s2`, and `MPO`s `os` into
 end
 
 """
-    contract_site{T,N,dir,L}(
+    contract_site(
         cntrctn::Contraction{T,N,dir},
         s::MPS{L,T},
         os::Vararg{MPO{L,T},N})
@@ -131,10 +131,10 @@ end
 Contract the next site of `MPS` `s` (on both sides) and `MPO`s `os` into
 `cntrctn`, producing a new `Contraction`.
 """
-contract_site{T,N,dir,L}(
+contract_site(
         cntrctn::Contraction{T,N,dir},
         s::MPS{L,T},
-        os::Vararg{MPO{L,T},N}) =
+        os::Vararg{MPO{L,T},N}) where {T,N,dir,L} =
     contract_site(cntrctn, s, s, os...)
 
 Base.:*(cntrctn::Contraction, args::Tuple{MPS,Vararg{MPO}}) =
@@ -142,15 +142,15 @@ Base.:*(cntrctn::Contraction, args::Tuple{MPS,Vararg{MPO}}) =
 
 
 """
-    contract_sides{T,N}(
+    contract_sides(
         cntrctn_left::Contraction{T,N,Right},
         cntrctn_right::Contraction{T,N,Left})
 
 Contract together left and right sides, producing a scalar.
 """
-@generated function contract_sides{T,N}(
+@generated function contract_sides(
         cntrctn_left::Contraction{T,N,Right},
-        cntrctn_right::Contraction{T,N,Left})
+        cntrctn_right::Contraction{T,N,Left}) where {T,N}
 
     # tnsr_left[i_s1, i_1, ..., i_N, i_s2]
     left = :(tnsr_left[i_s1])
