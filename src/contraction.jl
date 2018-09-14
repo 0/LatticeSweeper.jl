@@ -26,7 +26,7 @@ struct Contraction{T<:Number,N,dir}
 end
 
 """
-    Contraction(dir::Direction, site::Int, tnsr::Array{T,N})
+    Contraction(dir::Direction, site::Int, tnsr::Array)
 
 Make a `Contraction` up to site `site` going in the direction `dir` and
 containing the elements `tnsr`.

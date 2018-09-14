@@ -46,7 +46,7 @@ end
 
 
 """
-    compress!(o::MPO{L}, cutoff_max::Float64)
+    compress!(o::MPO, cutoff_max::Float64)
 
 Compress `o` by throwing away singular values below `cutoff_max` at each bond.
 """

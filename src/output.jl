@@ -167,7 +167,7 @@ function make_string(::SweepOutputDynamic, state::SweepState{L};
     io |> take! |> String
 end
 
-function step(so::SweepOutputDynamic, state::SweepState{L}) where {L}
+function step(so::SweepOutputDynamic, state::SweepState)
     time_now = time()
     time_now >= so.time_prev + so.time_step || return
 
@@ -178,7 +178,7 @@ function step(so::SweepOutputDynamic, state::SweepState{L}) where {L}
     nothing
 end
 
-function sweep(so::SweepOutputDynamic, state::SweepState{L}) where {L}
+function sweep(so::SweepOutputDynamic, state::SweepState)
     time_now = time()
 
     print(make_string(so, state; sweep=true))

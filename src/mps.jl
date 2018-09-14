@@ -18,7 +18,7 @@ struct MPS{L,T<:Number}
 end
 
 """
-    MPS(vs::Vector{Vector{T}})
+    MPS(vs::Vector{Vector})
 
 Create an `MPS` representing a product state (all bonds have dimension 1),
 where each site is described by the corresponding element of `vs`.
@@ -35,9 +35,9 @@ function MPS(vs::Vector{Vector{T}}) where {T}
 end
 
 """
-    MPS(v::Vector{T}, L)
+    MPS(v::Vector, L)
 
 Create an `MPS` for `L` sites representing a uniform product state (all bonds
 have dimension 1), where each site is described by `v`.
 """
-MPS(v::Vector{T}, L) where {T} = MPS([v for _ in 1:L])
+MPS(v::Vector, L) = MPS([v for _ in 1:L])

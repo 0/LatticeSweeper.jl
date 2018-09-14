@@ -1,5 +1,5 @@
 """
-    dmrg_step!(state::SweepState{L,T}, set::SweepSettings)
+    dmrg_step!(state::SweepState, set::SweepSettings)
 
 Update `state` by doing a two-site DMRG step with the parameters in `set`.
 """
