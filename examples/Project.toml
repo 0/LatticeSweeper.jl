@@ -1,0 +1,6 @@
+name = "LatticeSweeper example scripts"
+authors = ["Dmitri Iouchtchenko <diouchtc@uwaterloo.ca>"]
+
+[deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+LatticeSweeper = "7a89ca98-b850-11e8-37b9-cfab1b13f8d8"

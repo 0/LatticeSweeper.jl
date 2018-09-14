@@ -17,6 +17,19 @@ In order to run the example scripts in `examples/`, you will also need to
 pkg> add ArgParse
 ```
 
+### Application project
+
+If you're working with a clone of this repository, you can use the basic application project in `examples/`, which already has both `LatticeSweeper` and `ArgParse` as dependencies.
+From the repository root, run
+```
+julia --project=examples
+```
+and then
+```
+pkg> dev .
+```
+to create `examples/Manifest.toml` with a development version of `LatticeSweeper`.
+
 
 ## Examples
 
