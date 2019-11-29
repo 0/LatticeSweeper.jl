@@ -79,7 +79,7 @@ function compress!(o::MPO{L}, cutoff_max::Float64) where {L}
                 trunc_len -= 1
             end
             A = U[:, 1:trunc_len]
-            B = diagm(0 => S[1:trunc_len]) * V[:, 1:trunc_len]'
+            B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
             o.tnsrs[site] = reshape(A, size(M, 1), size(M, 2), size(M, 3),
                                        trunc_len)
             o.tnsrs[site+1] = reshape(B, trunc_len,

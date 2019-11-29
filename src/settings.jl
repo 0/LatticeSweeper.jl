@@ -65,13 +65,11 @@ specified in `kwargs`.
 function SweepSchedule(max_sweeps::Int; tolerance=nothing, kwargs...)
     max_sweeps >= 1 || throw(DomainError(max_sweeps, "At least 1 sweep."))
 
-    if tolerance !== nothing
-        if tolerance < 0.0
-            throw(DomainError(tolerance, "Non-negative tolerance."))
-        end
-    else
+    if isnothing(tolerance)
         # Default.
         tolerance = 1e-5
+    elseif tolerance < 0.0
+        throw(DomainError(tolerance, "Non-negative tolerance."))
     end
 
     kwargs = Dict(kwargs)

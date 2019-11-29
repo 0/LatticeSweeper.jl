@@ -3,7 +3,7 @@
 Simple two-site DMRG.
 No support for quantum number conservation.
 
-Tested with Julia 1.0.
+Tested with Julia 1.3.
 
 
 ## Installation

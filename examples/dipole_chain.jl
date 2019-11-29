@@ -129,7 +129,7 @@ println("[+] Constructed wavefunction.")
 
 println("[ ] Sweeping.")
 outputs = SweepOutput[]
-if output_file !== nothing
+if !isnothing(output_file)
     push!(outputs, SweepOutputFile(output_file))
 end
 push!(outputs, SweepOutputDynamic())

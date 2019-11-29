@@ -71,9 +71,9 @@ function dmrg_step!(state::SweepState{L,T}, set::SweepSettings) where {L,T}
     # Update the MPS.
     if state.dir == Right
         A = U[:, 1:trunc_len]
-        B = diagm(0 => S[1:trunc_len]) * V[:, 1:trunc_len]'
+        B = diagm(S[1:trunc_len]) * V[:, 1:trunc_len]'
     elseif state.dir == Left
-        A = U[:, 1:trunc_len] * diagm(0 => S[1:trunc_len])
+        A = U[:, 1:trunc_len] * diagm(S[1:trunc_len])
         B = V[:, 1:trunc_len]'
     end
     psi.tnsrs[site] = reshape(A, size(prev, 1), size(prev, 2), trunc_len)
