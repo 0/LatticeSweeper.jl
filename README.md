@@ -36,9 +36,9 @@ to create `examples/Manifest.toml` with a development version of `LatticeSweeper
 To run the following examples, you should set the project (e.g. using `--project` or `JULIA_PROJECT`) to a Julia project that has the prerequisites installed.
 
 * `julia examples/tfim.jl --help`
-* `julia --color=yes examples/tfim.jl -g 1.0 -L 8 --max-sweeps 4`
+* `julia --color=yes examples/tfim.jl -g 1.0 -L 512 --max-sweeps 16`
 * `julia examples/dipole_chain.jl --help`
-* `julia --color=yes examples/dipole_chain.jl -R 1.0 -N 3 --l-max 1 --max-sweeps 4`
+* `julia --color=yes examples/dipole_chain.jl -R 1.0 -N 6 --l-max 2 --max-sweeps 8`
 
 
 ## References

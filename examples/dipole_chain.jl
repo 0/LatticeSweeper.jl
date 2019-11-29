@@ -133,7 +133,7 @@ if !isnothing(output_file)
     push!(outputs, SweepOutputFile(output_file))
 end
 push!(outputs, SweepOutputDynamic())
-@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps); outputs=outputs)
+@time hist = dmrg!(psi, H, SweepSchedule(max_sweeps; tolerance=1e-7); outputs=outputs)
 println("[+] Swept.")
 
 hist.converged || @warn("Ground state not converged.")
